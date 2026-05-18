@@ -1285,6 +1285,15 @@ const MAX_TOOL_CALLS = 500;
 const MAX_IMPROVE_ITERATIONS = 2;
 
 async function runAgentLoop(userMessage, config) {
+  // Detect drag-and-dropped image files (bare path pasted into terminal)
+  const { detectDroppedFile } = require('../src/session/images');
+  const droppedPath = detectDroppedFile(userMessage);
+  if (droppedPath) {
+    // Convert bare path into an @reference prompt
+    userMessage = `@${droppedPath} — I dropped this image. What would you like me to do with it?`;
+    if (_fullscreenRef) _fullscreenRef.addTool('image', 'ok', `attached: ${path.basename(droppedPath)}`);
+  }
+
   // Resolve @file references in user input
   const { text, files } = resolveReferences(userMessage, process.cwd());
   let augmented = files.length > 0

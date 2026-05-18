@@ -83,4 +83,25 @@ function getMimeType(ext) {
   return types[ext] || 'image/png';
 }
 
-module.exports = { extractImages, formatImagesForAPI, modelSupportsVision, IMAGE_EXTENSIONS };
+/**
+ * Detect if input is just a file path (from drag-and-drop into terminal).
+ * Returns the cleaned path or null.
+ */
+function detectDroppedFile(input) {
+  const trimmed = input.trim().replace(/^["']|["']$/g, ''); // Strip quotes terminals sometimes add
+  
+  // Check if it looks like a file path (absolute or relative with image extension)
+  const ext = require('path').extname(trimmed).toLowerCase();
+  if (!IMAGE_EXTENSIONS.includes(ext)) return null;
+  
+  // Must look like a path (has slashes or starts with drive letter)
+  if (trimmed.includes('/') || trimmed.includes('\\') || /^[A-Z]:/i.test(trimmed) || trimmed.startsWith('.')) {
+    const fs = require('fs');
+    const resolved = require('path').resolve(trimmed);
+    if (fs.existsSync(resolved)) return resolved;
+  }
+  
+  return null;
+}
+
+module.exports = { extractImages, formatImagesForAPI, modelSupportsVision, detectDroppedFile, IMAGE_EXTENSIONS };
