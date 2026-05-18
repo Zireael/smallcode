@@ -51,15 +51,25 @@ class SessionStore {
 
   // Load a specific session
   load(id) {
+    // Try exact match first
     const filePath = path.join(this.sessionsDir, `${id}.json`);
-    if (!fs.existsSync(filePath)) return null;
-    try {
-      const session = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      this.current = session;
-      return session;
-    } catch {
-      return null;
+    if (fs.existsSync(filePath)) {
+      try {
+        const session = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        this.current = session;
+        return session;
+      } catch { return null; }
     }
+    // Try partial ID match (user may type short prefix from /sessions list)
+    try {
+      const files = fs.readdirSync(this.sessionsDir).filter(f => f.startsWith(id) && f.endsWith('.json'));
+      if (files.length === 1) {
+        const session = JSON.parse(fs.readFileSync(path.join(this.sessionsDir, files[0]), 'utf-8'));
+        this.current = session;
+        return session;
+      }
+    } catch {}
+    return null;
   }
 
   // Save current session state
